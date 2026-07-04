@@ -51,3 +51,53 @@ class Block(nn.Module):
         x = x + self.attn(self.norm1(x))       
         x = x + self.mlp(self.norm2(x))        
         return x
+
+#ViT block   
+class VisionTransformer(nn.Module):
+    def __init__(self, img_size=64, patch_size=8, embed_dim=192,
+                 depth=6, num_heads=3):
+        super().__init__()
+        self.patch_embed = PatchEmbed(img_size, patch_size, 3, embed_dim)
+        n = self.patch_embed.num_patches
+        self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
+        self.pos_embed = nn.Parameter(torch.zeros(1, n + 1, embed_dim))
+        self.blocks = nn.ModuleList(
+            [Block(embed_dim, num_heads) for _ in range(depth)])
+        self.norm = nn.LayerNorm(embed_dim)
+        nn.init.trunc_normal_(self.pos_embed, std=0.02)
+        nn.init.trunc_normal_(self.cls_token, std=0.02)
+
+    def _interp_pos(self, x):
+        """Interpolate pos embeddings when input size differs (32 vs 64)."""
+        n_x, n_p = x.shape[1] - 1, self.pos_embed.shape[1] - 1
+        if n_x == n_p:
+            return self.pos_embed
+        cls_pe, patch_pe = self.pos_embed[:, :1], self.pos_embed[:, 1:]
+        dim = x.shape[-1]
+        s_old, s_new = int(n_p ** 0.5), int(n_x ** 0.5)
+        patch_pe = patch_pe.reshape(1, s_old, s_old, dim).permute(0, 3, 1, 2)
+        patch_pe = nn.functional.interpolate(
+            patch_pe, size=(s_new, s_new), mode="bicubic")
+        patch_pe = patch_pe.permute(0, 2, 3, 1).reshape(1, -1, dim)
+        return torch.cat([cls_pe, patch_pe], dim=1)
+
+    def forward(self, x):
+        x = self.patch_embed(x)
+        cls = self.cls_token.expand(x.shape[0], -1, -1)
+        x = torch.cat([cls, x], dim=1)
+        x = x + self._interp_pos(x)
+        for blk in self.blocks:
+            x = blk(x)
+        x = self.norm(x)
+        return x[:, 0]        # CLS token = image representation
+
+    def get_last_attention(self, x):
+        """For Part 5 visualization."""
+        x = self.patch_embed(x)
+        cls = self.cls_token.expand(x.shape[0], -1, -1)
+        x = torch.cat([cls, x], dim=1)
+        x = x + self._interp_pos(x)
+        for blk in self.blocks[:-1]:
+            x = blk(x)
+        _, attn = self.blocks[-1](x, return_attention=True)
+        return attn            # (B, heads, N+1, N+1)
