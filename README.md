@@ -49,29 +49,21 @@ same-class images together. 20-NN accuracy: **~32%**.
 **Requirements:** Python 3.9+.
 
 ```bash
-# 1. Clone and enter the repo
-git clone <your-repo-url> DINO
+git clone https://github.com/m0han-raj/DINO.git
 cd DINO
 
-# 2. Create a virtual environment and install deps
 python -m venv venv
-# Windows:  venv\Scripts\activate
-# macOS/Linux:  source venv/bin/activate
+source venv/bin/activate
 pip install -r requirements.txt
 
-# 3. Download STL-10 (unlabeled + labeled splits)
 python data/data_download.py
 
-# 4. Train DINO (CPU edition — 20 epochs, checkpoints in outputs/checkpoints/)
 python -m src.train
 
-# 5. Linear-probe evaluation on the frozen backbone
 python -m src.evaluate --ckpt outputs/checkpoints/dino_epoch20.pt
 
-# 6. Visualize attention maps (emergent segmentation)
 python -m src.visualize --ckpt outputs/checkpoints/dino_epoch20.pt
 
-# 7. Explore everything interactively
 jupyter notebook test/test.ipynb
 ```
 
