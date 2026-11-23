@@ -56,8 +56,6 @@ python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 
-python data/data_download.py
-
 python -m src.train
 
 python -m src.evaluate --ckpt outputs/checkpoints/dino_epoch20.pt
@@ -100,7 +98,7 @@ DINO/
 │   ├── vit_sanity_test.py
 │   ├── aug_sanity_test.py
 │   └── head_loss_sanity_test.py
-├── data/                       # STL-10 dataset + download script
+├── data/                       # STL-10 (auto-downloaded on first run, git-ignored)
 ├── outputs/                    # Checkpoints, attention maps (git-ignored)
 ├── assets/                     # README images
 └── requirements.txt

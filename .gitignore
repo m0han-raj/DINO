@@ -1,5 +1,19 @@
-/venv
-/outputs
-/data
-__pycache__
-.vscode
+# Environments
+venv/
+.venv/
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Project artifacts
+/outputs/
+/data/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
